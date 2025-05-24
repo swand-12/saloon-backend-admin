@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upcoming Appointments - Saloon Management</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+
+        .header {
+            background: white;
+            padding: 20px 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 40px;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .back-btn {
+            background: #6c757d;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: #5a6268;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .logout-btn {
+            background: #e74c3c;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background: #c0392b;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .page-title {
+            font-size: 32px;
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .page-subtitle {
+            font-size: 16px;
+            color: #666;
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .appointments-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .appointments-header {
+            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .appointments-count {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .filter-section {
+            padding: 20px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .filter-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .appointments-list {
+            padding: 20px;
+        }
+
+        .appointment-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: box-shadow 0.3s ease;
+            position: relative;
+        }
+
+        .appointment-card:hover {
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .appointment-card.today {
+            border-left: 5px solid #f39c12;
+            background: #fff8e1;
+        }
+
+        .appointment-card.upcoming {
+            border-left: 5px solid #27ae60;
+        }
+
+        .appointment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .customer-info {
+            flex: 1;
+        }
+
+        .customer-name {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .customer-contact {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .appointment-status {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 5px;
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-today {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-upcoming {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .appointment-details {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .detail-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .detail-label {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .detail-value {
+            color: #666;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: opacity 0.3s ease;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-done {
+            background: #28a745;
+            color: white;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .empty-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .empty-title {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .empty-message {
+            font-size: 16px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #27ae60;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .appointment-header {
+                flex-direction: column;
+            }
+
+            .appointment-status {
+                align-items: flex-start;
+            }
+
+            .action-buttons {
+                justify-content: center;
+            }
+
+            .detail-row {
+                flex-direction: column;
+                gap: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <div class="header-left">
+                <button class="back-btn" onclick="window.location.href='/home'">← Back</button>
+                <div class="logo">📅 Upcoming Appointments</div>
+            </div>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <h1 class="page-title">Upcoming Appointments</h1>
+        <p class="page-subtitle">Manage your confirmed appointments and mark them as completed</p>
+
+        <div class="appointments-container">
+            <div class="appointments-header">
+                <div class="appointments-count" id="appointmentsCount">Loading...</div>
+            </div>
+            
+            <div class="filter-section">
+                <div class="filter-buttons">
+                    <button class="filter-btn active" data-filter="all">All Appointments</button>
+                    <button class="filter-btn" data-filter="today">Today</button>
+                    <button class="filter-btn" data-filter="upcoming">Upcoming</button>
+                </div>
+            </div>
+            
+            <div class="appointments-list" id="appointmentsList">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    Loading appointments...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let appointments = [];
+        let filteredAppointments = [];
+        let currentFilter = 'all';
+
+        // Load appointments on page load
+        window.addEventListener('load', loadAppointments);
+
+        // Add filter event listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    // Remove active class from all buttons
+                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    // Add active class to clicked button
+                    e.target.classList.add('active');
+                    
+                    currentFilter = e.target.dataset.filter;
+                    filterAppointments();
+                });
+            });
+        });
+
+        async function loadAppointments() {
+            try {
+                const response = await fetch('/api/appointments');
+                appointments = await response.json();
+                filterAppointments();
+            } catch (error) {
+                console.error('Error loading appointments:', error);
+                showError('Failed to load appointments. Please refresh the page.');
+            }
+        }
+
+        function filterAppointments() {
+            const today = new Date().toISOString().split('T')[0];
+            
+            switch(currentFilter) {
+                case 'today':
+                    filteredAppointments = appointments.filter(apt => 
+                        new Date(apt.date).toISOString().split('T')[0] === today
+                    );
+                    break;
+                case 'upcoming':
+                    filteredAppointments = appointments.filter(apt => 
+                        new Date(apt.date).toISOString().split('T')[0] > today
+                    );
+                    break;
+                default:
+                    filteredAppointments = [...appointments];
+            }
+            
+            displayAppointments();
+        }
+
+        function displayAppointments() {
+            const appointmentsList = document.getElementById('appointmentsList');
+            const appointmentsCount = document.getElementById('appointmentsCount');
+            
+            const filterText = currentFilter === 'all' ? 'Total' : 
+                              currentFilter === 'today' ? "Today's" : 'Upcoming';
+            appointmentsCount.textContent = `${filteredAppointments.length} ${filterText} Appointment${filteredAppointments.length !== 1 ? 's' : ''}`;
+
+            if (filteredAppointments.length === 0) {
+                const emptyMessage = currentFilter === 'today' ? 'No appointments scheduled for today!' :
+                                  currentFilter === 'upcoming' ? 'No upcoming appointments!' :
+                                  'No confirmed appointments found!';
+                                  
+                appointmentsList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">📅</div>
+                        <div class="empty-title">No Appointments</div>
+                        <div class="empty-message">${emptyMessage}</div>
+                    </div>
+                `;
+                return;
+            }
+
+            const today = new Date().toISOString().split('T')[0];
+            
+            const appointmentsHTML = filteredAppointments.map(appointment => {
+                const appointmentDate = new Date(appointment.date).toISOString().split('T')[0];
+                const isToday = appointmentDate === today;
+                const cardClass = isToday ? 'today' : 'upcoming';
+                const statusClass = isToday ? 'status-today' : 'status-upcoming';
+                const statusText = isToday ? 'Today' : 'Upcoming';
+                
+                return `
+                    <div class="appointment-card ${cardClass}" data-id="${appointment._id}">
+                        <div class="appointment-header">
+                            <div class="customer-info">
+                                <div class="customer-name">${appointment.name}</div>
+                                <div class="customer-contact">
+                                    📧 ${appointment.email} | 📞 ${appointment.phone}
+                                </div>
+                            </div>
+                            <div class="appointment-status">
+                                <div class="status-badge ${statusClass}">${statusText}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="appointment-details">
+                            <div class="detail-row">
+                                <span class="detail-label">Service:</span>
+                                <span class="detail-value">${appointment.service}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Date:</span>
+                                <span class="detail-value">${new Date(appointment.date).toLocaleDateString()}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Time:</span>
+                                <span class="detail-value">${appointment.time}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="action-buttons">
+                            <button class="btn btn-done" onclick="markAsDone('${appointment._id}')">
+                                ✓ Mark as Done
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            appointmentsList.innerHTML = appointmentsHTML;
+        }
+
+        async function markAsDone(appointmentId) {
+            if (!confirm('Are you sure you want to mark this appointment as completed?')) {
+                return;
+            }
+
+            const card = document.querySelector(`[data-id="${appointmentId}"]`);
+            const button = card.querySelector('.btn-done');
+            
+            // Disable button
+            button.disabled = true;
+            button.textContent = 'Processing...';
+
+            try {
+                const response = await fetch(`/api/appointments/${appointmentId}/done`, {
+                    method: 'POST'
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Remove the appointment from the list
+                    appointments = appointments.filter(apt => apt._id !== appointmentId);
+                    filterAppointments();
+                    showSuccess('Appointment marked as completed successfully!');
+                } else {
+                    throw new Error(data.error || 'Failed to mark appointment as done');
+                }
+            } catch (error) {
+                console.error('Error marking appointment as done:', error);
+                showError('Failed to mark appointment as done. Please try again.');
+                // Re-enable button
+                button.disabled = false;
+                button.textContent = '✓ Mark as Done';
+            }
+        }
+
+        function showSuccess(message) {
+            // You can implement a toast notification here
+            alert(message);
+        }
+
+        function showError(message) {
+            // You can implement a toast notification here
+            alert(message);
+        }
+
+        async function logout() {
+            try {
+                await fetch('/logout', { method: 'POST' });
+                window.location.href = '/login';
+            } catch (error) {
+                console.error('Logout error:', error);
+                window.location.href = '/login';
+            }
+        }
+    </script>
+</body>
+</html>

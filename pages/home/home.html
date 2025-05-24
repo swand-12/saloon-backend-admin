@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Saloon Management</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+
+        .header {
+            background: white;
+            padding: 20px 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 40px;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .logout-btn {
+            background: #e74c3c;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background: #c0392b;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .welcome-section {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .welcome-title {
+            font-size: 36px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .welcome-subtitle {
+            font-size: 18px;
+            color: #666;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .dashboard-card {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+        }
+
+        .dashboard-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-icon {
+            font-size: 60px;
+            margin-bottom: 20px;
+            display: block;
+        }
+
+        .requests-card .card-icon {
+            color: #f39c12;
+        }
+
+        .appointments-card .card-icon {
+            color: #27ae60;
+        }
+
+        .card-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .card-description {
+            font-size: 16px;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .card-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: opacity 0.3s ease;
+        }
+
+        .card-button:hover {
+            opacity: 0.9;
+        }
+
+        .stats-section {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            margin-bottom: 40px;
+        }
+
+        .stats-title {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .stat-number {
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .welcome-title {
+                font-size: 28px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <div class="logo">✂️ Saloon Admin Dashboard</div>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="welcome-section">
+            <h1 class="welcome-title">Welcome, Admin!</h1>
+            <p class="welcome-subtitle">Manage your salon appointments and requests efficiently</p>
+        </div>
+
+        <div class="stats-section">
+            <h2 class="stats-title">Quick Stats</h2>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-number" id="pendingCount">-</div>
+                    <div class="stat-label">Pending Requests</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="upcomingCount">-</div>
+                    <div class="stat-label">Upcoming Appointments</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="todayCount">-</div>
+                    <div class="stat-label">Today's Appointments</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+            <div class="dashboard-card requests-card" onclick="window.location.href='/see-requests'">
+                <span class="card-icon">📋</span>
+                <h2 class="card-title">Appointment Requests</h2>
+                <p class="card-description">
+                    View and manage all pending appointment requests from customers. 
+                    Accept or reject requests with just one click.
+                </p>
+                <button class="card-button">View Requests</button>
+            </div>
+
+            <div class="dashboard-card appointments-card" onclick="window.location.href='/see-appointments'">
+                <span class="card-icon">📅</span>
+                <h2 class="card-title">Upcoming Appointments</h2>
+                <p class="card-description">
+                    See all confirmed appointments and manage your salon schedule. 
+                    Mark completed appointments as done.
+                </p>
+                <button class="card-button">View Appointments</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Load stats on page load
+        window.addEventListener('load', loadStats);
+
+        async function loadStats() {
+            try {
+                // Get pending requests count
+                const requestsResponse = await fetch('/api/requests');
+                const requests = await requestsResponse.json();
+                document.getElementById('pendingCount').textContent = requests.length;
+
+                // Get upcoming appointments count
+                const appointmentsResponse = await fetch('/api/appointments');
+                const appointments = await appointmentsResponse.json();
+                document.getElementById('upcomingCount').textContent = appointments.length;
+
+                // Get today's appointments count
+                const today = new Date().toISOString().split('T')[0];
+                const todayAppointments = appointments.filter(apt => 
+                    new Date(apt.date).toISOString().split('T')[0] === today
+                );
+                document.getElementById('todayCount').textContent = todayAppointments.length;
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        async function logout() {
+            try {
+                await fetch('/logout', { method: 'POST' });
+                window.location.href = '/login';
+            } catch (error) {
+                console.error('Logout error:', error);
+                window.location.href = '/login';
+            }
+        }
+    </script>
+</body>
+</html>
