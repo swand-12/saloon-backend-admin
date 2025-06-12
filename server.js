@@ -102,9 +102,33 @@ app.get('/login', (req, res) => {
 app.post('/login', ensureDbConnection, (req, res) => {
   const { username, password } = req.body;
   
+  // Move ADMIN_USERS inside the route to ensure fresh env vars
+  const ADMIN_USERS = [
+    {
+      username: process.env.ADMIN_USERNAME_1 || 'admin1',
+      password: process.env.ADMIN_PASSWORD_1 || 'password1'
+    },
+    {
+      username: process.env.ADMIN_USERNAME_2 || 'admin2',
+      password: process.env.ADMIN_PASSWORD_2 || 'password2'
+    }
+  ];
+  
+  // Debug logging
+  console.log('Login attempt:', { username, password });
+  console.log('Environment variables:', {
+    ADMIN_USERNAME_1: process.env.ADMIN_USERNAME_1,
+    ADMIN_PASSWORD_1: process.env.ADMIN_PASSWORD_1,
+    ADMIN_USERNAME_2: process.env.ADMIN_USERNAME_2,
+    ADMIN_PASSWORD_2: process.env.ADMIN_PASSWORD_2
+  });
+  console.log('ADMIN_USERS array:', ADMIN_USERS);
+  
   const validAdmin = ADMIN_USERS.find(admin => 
     admin.username === username && admin.password === password
   );
+  
+  console.log('Valid admin found:', validAdmin);
   
   if (validAdmin) {
     res.cookie('isLoggedIn', 'true', { 
