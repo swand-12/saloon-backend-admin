@@ -5,7 +5,6 @@ const path = require('path');
 require('dotenv').config();
 
 const app = express();
-const PORT = process.env.PORT || 3001;
 
 // Middleware
 app.use(express.json());
@@ -13,17 +12,35 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(express.static('public'));
 
-// MongoDB connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/saloon_db', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-});
+// MongoDB connection with connection pooling for serverless
+let cachedDb = null;
 
-const db = mongoose.connection;
-db.on('error', console.error.bind(console, 'MongoDB connection error:'));
-db.once('open', () => {
-  console.log('Connected to MongoDB database');
-});
+const connectToDatabase = async () => {
+  if (cachedDb && mongoose.connection.readyState === 1) {
+    return cachedDb;
+  }
+
+  try {
+    const connection = await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/saloon_db', {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      bufferCommands: false,
+      bufferMaxEntries: 0,
+      useFindAndModify: false,
+      useCreateIndex: true,
+      maxPoolSize: 5,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+    });
+    
+    cachedDb = connection;
+    console.log('Connected to MongoDB database');
+    return connection;
+  } catch (error) {
+    console.error('MongoDB connection error:', error);
+    throw error;
+  }
+};
 
 // Appointment Schema
 const appointmentSchema = new mongoose.Schema({
@@ -37,9 +54,9 @@ const appointmentSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 });
 
-const Appointment = mongoose.model('Appointment', appointmentSchema);
+const Appointment = mongoose.models.Appointment || mongoose.model('Appointment', appointmentSchema);
 
-// Admin credentials from .env - FIXED
+// Admin credentials from .env
 const ADMIN_USERS = [
   {
     username: process.env.ADMIN_USERNAME_1 || 'admin1',
@@ -60,6 +77,17 @@ const requireAuth = (req, res, next) => {
   }
 };
 
+// Middleware to ensure database connection
+const ensureDbConnection = async (req, res, next) => {
+  try {
+    await connectToDatabase();
+    next();
+  } catch (error) {
+    console.error('Database connection failed:', error);
+    res.status(500).json({ error: 'Database connection failed' });
+  }
+};
+
 // Routes
 
 // Login page
@@ -71,7 +99,7 @@ app.get('/login', (req, res) => {
 });
 
 // Login POST
-app.post('/login', (req, res) => {
+app.post('/login', ensureDbConnection, (req, res) => {
   const { username, password } = req.body;
   
   const validAdmin = ADMIN_USERS.find(admin => 
@@ -82,7 +110,8 @@ app.post('/login', (req, res) => {
     res.cookie('isLoggedIn', 'true', { 
       httpOnly: true, 
       secure: process.env.NODE_ENV === 'production',
-      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      sameSite: 'lax'
     });
     res.json({ success: true });
   } else {
@@ -105,25 +134,26 @@ app.get('/see-appointments', requireAuth, (req, res) => {
   res.sendFile(path.join(__dirname, 'pages', 'see-appointments', 'see-appointments.html'));
 });
 
-
 app.get('/see-recent-appointments', requireAuth, (req, res) => {
   res.sendFile(path.join(__dirname, 'pages', 'SeeRecentAppointMent', 'index.html'));
-})
+});
+
 // API Routes
 
 // Get all pending appointment requests
-app.get('/api/requests', requireAuth, async (req, res) => {
+app.get('/api/requests', requireAuth, ensureDbConnection, async (req, res) => {
   try {
     const requests = await Appointment.find({ status: 'pending' })
       .sort({ createdAt: -1 });
     res.json(requests);
   } catch (error) {
+    console.error('Error fetching requests:', error);
     res.status(500).json({ error: 'Failed to fetch requests' });
   }
 });
 
 // Accept an appointment request
-app.post('/api/requests/:id/accept', requireAuth, async (req, res) => {
+app.post('/api/requests/:id/accept', requireAuth, ensureDbConnection, async (req, res) => {
   try {
     const appointment = await Appointment.findByIdAndUpdate(
       req.params.id,
@@ -137,12 +167,13 @@ app.post('/api/requests/:id/accept', requireAuth, async (req, res) => {
     
     res.json({ success: true, appointment });
   } catch (error) {
+    console.error('Error accepting appointment:', error);
     res.status(500).json({ error: 'Failed to accept appointment' });
   }
 });
 
 // Reject an appointment request
-app.post('/api/requests/:id/reject', requireAuth, async (req, res) => {
+app.post('/api/requests/:id/reject', requireAuth, ensureDbConnection, async (req, res) => {
   try {
     const appointment = await Appointment.findByIdAndDelete(req.params.id);
     
@@ -152,23 +183,25 @@ app.post('/api/requests/:id/reject', requireAuth, async (req, res) => {
     
     res.json({ success: true });
   } catch (error) {
+    console.error('Error rejecting appointment:', error);
     res.status(500).json({ error: 'Failed to reject appointment' });
   }
 });
 
 // Get all accepted appointments
-app.get('/api/appointments', requireAuth, async (req, res) => {
+app.get('/api/appointments', requireAuth, ensureDbConnection, async (req, res) => {
   try {
     const appointments = await Appointment.find({ status: 'accepted' })
       .sort({ date: 1, time: 1 });
     res.json(appointments);
   } catch (error) {
+    console.error('Error fetching appointments:', error);
     res.status(500).json({ error: 'Failed to fetch appointments' });
   }
 });
 
 // Mark appointment as done
-app.post('/api/appointments/:id/done', requireAuth, async (req, res) => {
+app.post('/api/appointments/:id/done', requireAuth, ensureDbConnection, async (req, res) => {
   try {
     const appointment = await Appointment.findByIdAndUpdate(
       req.params.id,
@@ -182,6 +215,7 @@ app.post('/api/appointments/:id/done', requireAuth, async (req, res) => {
     
     res.json({ success: true, appointment });
   } catch (error) {
+    console.error('Error marking appointment as done:', error);
     res.status(500).json({ error: 'Failed to mark appointment as done' });
   }
 });
@@ -202,6 +236,5 @@ app.use((req, res) => {
   res.status(404).send('Page not found');
 });
 
-app.listen(PORT, () => {
-  console.log(`Admin server running on port ${PORT}`);
-});
+// Export the Express API for Vercel
+module.exports = app;
