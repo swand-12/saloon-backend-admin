@@ -39,15 +39,15 @@ const appointmentSchema = new mongoose.Schema({
 
 const Appointment = mongoose.model('Appointment', appointmentSchema);
 
-// Admin credentials from .env
+// Admin credentials from .env - FIXED
 const ADMIN_USERS = [
   {
     username: process.env.ADMIN_USERNAME_1 || 'admin1',
-    password: process.env.ADMIN_PASSWORD_1 || 'admin123'
+    password: process.env.ADMIN_PASSWORD_1 || 'password1'
   },
   {
     username: process.env.ADMIN_USERNAME_2 || 'admin2',
-    password: process.env.ADMIN_PASSWORD_2 || 'admin456'
+    password: process.env.ADMIN_PASSWORD_2 || 'password2'
   }
 ];
 
@@ -105,6 +105,10 @@ app.get('/see-appointments', requireAuth, (req, res) => {
   res.sendFile(path.join(__dirname, 'pages', 'see-appointments', 'see-appointments.html'));
 });
 
+
+app.get('/see-recent-appointments', requireAuth, (req, res) => {
+  res.sendFile(path.join(__dirname, 'pages', 'SeeRecentAppointMent', 'index.html'));
+})
 // API Routes
 
 // Get all pending appointment requests
