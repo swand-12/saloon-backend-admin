@@ -17,27 +17,27 @@ let cachedDb = null;
 
 const connectToDatabase = async () => {
   if (cachedDb && mongoose.connection.readyState === 1) {
+    console.log('Using cached database connection');
     return cachedDb;
   }
 
+  console.log('Attempting to connect to MongoDB...');
+  console.log('MongoDB URI:', process.env.MONGODB_URI || 'mongodb://localhost:27017/saloon_db');
+
   try {
     const connection = await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/saloon_db', {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-      bufferCommands: false,
-      bufferMaxEntries: 0,
-      useFindAndModify: false,
-      useCreateIndex: true,
       maxPoolSize: 5,
       serverSelectionTimeoutMS: 5000,
       socketTimeoutMS: 45000,
     });
     
     cachedDb = connection;
-    console.log('Connected to MongoDB database');
+    console.log('✅ Successfully connected to MongoDB database');
+    console.log('Database name:', mongoose.connection.name);
     return connection;
   } catch (error) {
-    console.error('MongoDB connection error:', error);
+    console.error('❌ MongoDB connection error:', error.message);
+    console.error('Full error:', error);
     throw error;
   }
 };
@@ -244,6 +244,19 @@ app.post('/api/appointments/:id/done', requireAuth, ensureDbConnection, async (r
   }
 });
 
+// Get all done appointments (for recent appointments page)
+app.get('/api/recent-appointments', requireAuth, ensureDbConnection, async (req, res) => {
+  try {
+    const appointments = await Appointment.find({ status: 'done' })
+      .sort({ createdAt: -1 })
+      .limit(50); // Limit to last 50 completed appointments
+    res.json(appointments);
+  } catch (error) {
+    console.error('Error fetching recent appointments:', error);
+    res.status(500).json({ error: 'Failed to fetch recent appointments' });
+  }
+});
+
 // Logout
 app.post('/logout', (req, res) => {
   res.clearCookie('isLoggedIn');
@@ -259,6 +272,26 @@ app.get('/', (req, res) => {
 app.use((req, res) => {
   res.status(404).send('Page not found');
 });
+
+// Server startup
+const PORT = process.env.PORT || 3001;
+
+// Only start the server if this file is run directly (not when imported)
+if (require.main === module) {
+  // Connect to database and then start the server
+  connectToDatabase()
+    .then(() => {
+      app.listen(PORT, () => {
+        console.log(`🚀 Server is running on http://localhost:${PORT}`);
+        console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
+        console.log(`📁 Admin credentials loaded from environment variables`);
+      });
+    })
+    .catch((error) => {
+      console.error('❌ Failed to start server due to database connection error:', error);
+      process.exit(1);
+    });
+}
 
 // Export the Express API for Vercel
 module.exports = app;
